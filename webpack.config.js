@@ -23,11 +23,6 @@ module.exports = {
     ]
   },
   plugins: [
-    new webpack.DefinePlugin({
-      'process.env': Object.keys(process.env).reduce((acc, key) => {
-        acc[key] = JSON.stringify(process.env[key])
-        return acc
-      }, {})
-    })
+    new webpack.EnvironmentPlugin(process.env)
   ]
 }
