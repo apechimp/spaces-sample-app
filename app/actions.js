@@ -1,12 +1,15 @@
 import axios from 'axios'
-import edgarFacts from 'edgar-facts'
+import jwtDecode from 'jwt-decode'
 import url from 'url'
 
 import {
   appApiName,
   gatewayUri,
   jwt,
-  spaceId
+  opportunityRecordTypeApiName,
+  spaceId,
+  uiUri,
+  workflowTemplateApiName
 } from './config'
 
 export const RECEIVE_ITEM = 'RECEIVE_ITEM'
@@ -47,23 +50,64 @@ export const fetchList = () => async (dispatch) => {
   })
 }
 
-export const RECEIVE_CREATE_FACT = 'RECEIVE_CREATE_FACT'
-export const REQUEST_CREATE_FACT = 'REQUEST_CREATE_FACT'
-export const createFact = () => async (dispatch) => {
-  const edgarFact = edgarFacts()
-  dispatch({ type: REQUEST_CREATE_FACT, fact: edgarFact })
-  const { data: fact } = await axios.post(
+export const RECEIVE_LAUNCH_WORKFLOW = 'RECEIVE_LAUNCH_WORKFLOW'
+export const REQUEST_LAUNCH_WORKFLOW = 'REQUEST_LAUNCH_WORKFLOW'
+export const launchWorkflow = () => async (dispatch) => {
+  dispatch({ type: REQUEST_LAUNCH_WORKFLOW })
+  const { id: userId } = jwtDecode(jwt)
+  const { data: { lanetix: { id: recordId } } } = await axios(
     url.resolve(
       gatewayUri,
-      `/v1/spaces/${spaceId}/apps/${appApiName}/content`
+      `/v1/records/${opportunityRecordTypeApiName}`
     ),
     {
-      data: { name: edgarFact },
-      mimeType: 'vnd.com.edgar.fact'
-    },
-    {
-      headers: { Authorization: `Bearer ${jwt}` }
+      headers: { Authorization: `Bearer ${jwt}` },
+      method: 'POST',
+      data: {
+        name: 'Trade Lane Optimization',
+        owner_id: userId
+      }
     }
   )
-  dispatch({ type: RECEIVE_CREATE_FACT, fact })
+  const [ , { data: { id: spaceId } } ] = await Promise.all([
+    axios(
+      url.resolve(
+        gatewayUri,
+        `/v1/workflows/${opportunityRecordTypeApiName}/${recordId}/${workflowTemplateApiName}`
+      ),
+      {
+        headers: { Authorization: `Bearer ${jwt}` },
+        method: 'POST'
+      }
+    ),
+    axios(
+      url.resolve(
+        gatewayUri,
+        `/v1/spaces/record/${opportunityRecordTypeApiName}/${recordId}`,
+      ),
+      {
+        headers: { Authorization: `Bearer ${jwt}` }
+      }
+    )
+  ])
+  dispatch({
+    type: RECEIVE_LAUNCH_WORKFLOW,
+    recordId
+  })
+  window.top.location = url.resolve(
+    uiUri,
+    `/spaces/${spaceId}/workflows/${workflowTemplateApiName}`
+  )
 }
+
+export const DESELECT_SHIPMENTS = 'DESELECT_SHIPMENTS'
+export const deselectShipments = (shipmentIndices) => ({
+  type: DESELECT_SHIPMENTS,
+  shipmentIndices
+})
+
+export const SELECT_SHIPMENTS = 'SELECT_SHIPMENTS'
+export const selectShipments = (shipmentIndices) => ({
+  type: SELECT_SHIPMENTS,
+  shipmentIndices
+})

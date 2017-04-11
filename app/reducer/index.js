@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux'
 
-import item from './item'
-import list from './list'
+import selectedShipments from './selected-shipment'
+import shipments from './shipments'
 
 export default combineReducers({
-  item,
-  list
+  selectedShipments,
+  shipments
 })

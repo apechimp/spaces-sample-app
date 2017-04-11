@@ -1,4 +1,5 @@
 import 'babel-polyfill'
+import './app.css'
 
 import React from 'react'
 import ReactDOM from 'react-dom'
@@ -6,9 +7,7 @@ import { Provider } from 'react-redux'
 import { applyMiddleware, compose, createStore } from 'redux'
 import thunk from 'redux-thunk'
 
-import { contentId } from './config'
-import Item from './item'
-import List from './list'
+import Main from './main'
 import reducer from './reducer'
 
 const store = createStore(
@@ -23,11 +22,7 @@ const store = createStore(
 
 ReactDOM.render(
   <Provider store={store}>
-    {
-      contentId
-        ? <Item id={contentId} />
-        : <List />
-    }
+    <Main />
   </Provider>,
   document.getElementById('root')
 )
